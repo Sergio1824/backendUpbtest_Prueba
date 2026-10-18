@@ -5,7 +5,20 @@ const productoRoutes = require('./routes/producto.routes');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin(origin, callback) {
+        // Requests without an Origin header (Postman, curl and health checks) are allowed.
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(null, false);
+    },
+}));
 app.use(express.json());
 
 app.get('/', (req, res) => {

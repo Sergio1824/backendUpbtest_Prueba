@@ -2,7 +2,7 @@ name: Deploy a Render
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
 
 jobs:
   deploy:
@@ -24,4 +24,20 @@ jobs:
         run: find src -name "*.js" -exec node --check {} \;
 
       - name: Desplegar en Render
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::No está disponible el secreto RENDER_DEPLOY_HOOK_URL en el entorno dev."
+            exit 1
+          fi
+
+          case "$RENDER_DEPLOY_HOOK_URL" in
+            https://api.render.com/deploy/*) ;;
+            *)
+              echo "::error::RENDER_DEPLOY_HOOK_URL no parece ser un Deploy Hook de Render."
+              exit 1
+              ;;
+          esac
+
+          curl --fail-with-body --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
