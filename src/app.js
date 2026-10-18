@@ -1,7 +1,12 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const pool = require('./config/db');
 const productoRoutes = require('./routes/producto.routes');
+const carritoRoutes = require('./routes/carrito.routes');
+const compraRoutes = require('./routes/compra.routes');
 
 const app = express();
 
@@ -30,6 +35,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/productos', productoRoutes);
+app.use('/api/carrito', carritoRoutes);
+app.use('/api/compras', compraRoutes);
 
 // Ruta no encontrada
 app.use((req, res) => {
@@ -50,6 +57,19 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+const iniciar = async () => {
+    if (process.env.DATABASE_URL) {
+        const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
+        await pool.query(schema);
+        console.log('Database schema is ready.');
+    }
+
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+};
+
+iniciar().catch((error) => {
+    console.error('The server could not initialize the database schema.', error.message);
+    process.exit(1);
 });

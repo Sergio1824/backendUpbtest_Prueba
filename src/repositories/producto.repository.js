@@ -11,6 +11,11 @@ const findById = async (id) => {
     return Producto.fromRow(rows[0]);
 };
 
+const findByIds = async (ids) => {
+    const { rows } = await pool.query('SELECT * FROM productos WHERE id = ANY($1::int[])', [ids]);
+    return rows.map(Producto.fromRow);
+};
+
 const create = async ({ nombre, precio, stock }) => {
     const { rows } = await pool.query(
         `INSERT INTO productos (nombre, precio, stock)
@@ -37,4 +42,4 @@ const remove = async (id) => {
     return rowCount > 0;
 };
 
-module.exports = { findAll, findById, create, update, remove };
+module.exports = { findAll, findById, findByIds, create, update, remove };
